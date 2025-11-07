@@ -72,7 +72,21 @@
             <div class="log-title text-center">
               <h2><strong style="color:#d99879">Payment Method</strong></h2><br>
             </div>
-          <h3 style="font-size:15px; margin-left:30px" class="floatleft">Paypal</h3><br><br>
+            <div style="display:flex; gap:20px; justify-content:center; align-items:flex-start;">
+              <div style="text-align:center;">
+                <h3 style="font-size:15px; margin-left:30px">PayPal</h3>
+                <div id="paypal-button-container"></div>
+              </div>
+
+              <div style="text-align:center;">
+                <h3 style="font-size:15px; margin-left:30px">Stripe</h3>
+                <!-- Visible Stripe fallback form -->
+                <form id="stripe-form" method="post" action="{% url 'orders:stripe_checkout' %}">
+                  {% csrf_token %}
+                  <button class="btn" style="background:#6772e5;border:none;padding:10px 20px;border-radius:6px;color:#fff;cursor:pointer;">Pay with Stripe</button>
+                </form>
+              </div>
+            </div>
           </div>
         </div><br>
       </div>
@@ -118,7 +132,7 @@
                 style="background:#f4cca4;color:#1c1427; width:100% ; text-transform: capitalize;font-size:15px"><b>Place
                   Order</b></button>
               -->
-              <div id="paypal-button-container"></div>
+              <!-- PayPal button renders above in the payment methods section -->
             </div>
           </div>
         </div>
@@ -209,5 +223,42 @@ var redirect_url = "{% url 'orders:order_complete' %}"
 
 	}).render('#paypal-button-container');
 </script>
+
+  <!-- Stripe JS and helper -->
+  <script src="https://js.stripe.com/v3/"></script>
+  <script>
+    const stripe = Stripe('{{ stripe_publishable_key }}');
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+          const cookies = document.cookie.split(';');
+          for (let i = 0; i < cookies.length; i++) {
+              const cookie = cookies[i].trim();
+              if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                  cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                  break;
+              }
+          }
+      }
+      return cookieValue;
+    }
+
+    function initiateStripeCheckout() {
+      const csrftoken = getCookie('csrftoken');
+      fetch("{% url 'orders:stripe_checkout' %}", {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': csrftoken,
+          'Content-Type': 'application/json'
+        }
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.error) { console.error(data.error); return; }
+        return stripe.redirectToCheckout({ sessionId: data.sessionId });
+      })
+      .catch(e => console.error(e));
+    }
+  </script>
 
 {% endblock content %}

@@ -49,21 +49,24 @@
 									</div>
 								</div>
 								<div  class="col-sm-6">
-									<div style="background:#40394A;;border-radius:20px ;" class="l-blog-text">
-										<div  class="banner">
+									<div style="background:#40394A;border-radius:20px;" class="l-blog-text text-center">
+										<div class="banner">
                                             <a href="{% url 'orders:checkout' %}">
-                                                <img style="max-width:100%;height:300px;border-radius:20px 20px 0 0 ;" src="{% static 'img/cred1.png' %}" alt="" />
+                                                <img style="max-width:100%;height:300px;border-radius:20px 20px 0 0;" src="{% static 'img/cred1.png' %}" alt="" />
                                             </a>
                                         </div>
 										<br><br>
                                         <div>
-                                            <h2> credit card || PayPal</h2>
+                                            <h2>Pay with Stripe</h2>
 										</div>
                                         <br>
 										<hr>
                                         <br>
-                                        <div>
-                                            <h4><a href="{% url 'orders:checkout' %}">Pay Now</a></h4>
+										<div>
+                                            <form method="post" action="{% url 'orders:payment' %}">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-primary" style="background:#6772e5;border:none;padding:10px 20px;border-radius:6px;color:#fff;cursor:pointer;">Pay with Stripe</button>
+                                            </form>
 										</div>
                                         <br>
 									</div>

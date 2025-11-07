@@ -1,0 +1,37 @@
+<html>
+  <body style="font-family: Arial, Helvetica, sans-serif; color: #333;">
+    <h2>Thank you for your order, {{ user.first_name }}!</h2>
+    <p>We have received your order <strong>{{ order.order_number }}</strong>. Below is a summary of your purchase:</p>
+
+    <table width="100%" cellpadding="6" cellspacing="0" style="border-collapse:collapse;">
+      <thead>
+        <tr style="background:#f4f4f4;text-align:left;">
+          <th>Product</th>
+          <th>Unit price</th>
+          <th>Qty</th>
+          <th>Line total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in ordered_products %}
+        <tr>
+          <td>{{ item.product_name }}</td>
+          <td>${{ item.unit_price }}</td>
+          <td>{{ item.quantity }}</td>
+          <td>${{ item.line_total }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <p style="margin-top:10px">
+      <strong>Subtotal:</strong> ${{ subtotal }}<br />
+      <strong>Shipping & handling:</strong> ${{ handling|default:"0.00" }}<br />
+      <strong>Tax (VAT):</strong> ${{ order.tax }}<br />
+      <strong>Order total:</strong> ${{ order.order_total }}
+    </p>
+
+    <p>If you have any questions reply to this email and we'll help you out.</p>
+    <p>Thanks,<br/>The ECommerce Team</p>
+  </body>
+</html>
