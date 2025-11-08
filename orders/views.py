@@ -438,43 +438,71 @@ def payment_cancel(request):
     messages.error(request, 'Payment was cancelled')
     return redirect('orders:checkout')
 
+@login_required(login_url = 'accounts:login')
 def order_completed(request):
+    """Show completed order (invoice) only to the order owner.
+
+    Access by link alone is insufficient — we require the authenticated user
+    to match the order.account. If you want public invoices, consider adding
+    a secure, unguessable token on the Order model and use that instead.
+    """
     order_number = request.GET.get('order_number')
     transID = request.GET.get('payment_id')
 
-    try:
-        # Get most recent completed order with this number
-        order = Order.objects.filter(
-            order_number=order_number,
-            is_ordered=True
-        ).order_by('-id').first()
-        
-        if not order:
-            return redirect('shop:shop')
-            
-        ordered_products = OrderProduct.objects.filter(order_id=order.id)
+    # access requires login (enforced by decorator) and ownership check below
 
-        subtotall = 0
-        for i in ordered_products:
-            subtotall += i.product_price * i.quantity
-        subtotal = round(subtotall, 2)
-        # If multiple Payment records exist with the same payment_id, pick the most recent one.
-        payment = Payment.objects.filter(payment_id=transID).order_by('-id').first()
-        if not payment:
-            # If we can't find a payment, redirect to shop (or you may want to show an error page)
-            return redirect('shop:shop')
-
-        context = {
-            'order': order,
-            'ordered_products': ordered_products,
-            'order_number': order.order_number,
-            'transID': payment.payment_id,
-            'payment': payment,
-            'subtotal': subtotal,
-        }
-        return render(request, 'shop/orders/order_completed/order_completed.html', context)
-    except (Payment.DoesNotExist, Order.DoesNotExist):
+    if not order_number or not transID:
+        messages.error(request, 'Missing order information')
         return redirect('shop:shop')
+
+    # Get the most recent completed order that belongs to the current user
+    order = Order.objects.filter(
+        order_number=order_number,
+        is_ordered=True,
+        user=request.user,
+    ).order_by('-id').first()
+
+    if not order:
+        messages.error(request, 'Order not found or you do not have permission to view it')
+        return redirect('shop:shop')
+
+    # Extra safety: if order.user is null (legacy data) deny access rather than
+    # allowing ambiguous access. Encourage using a public token for shareable links.
+    if order.user is None:
+        messages.error(request, 'Order not available for public viewing')
+        return redirect('shop:shop')
+
+
+    # Ensure the provided payment id actually relates to this order
+    # Prefer the FK on the order if populated
+    payment = None
+    if order.payment and getattr(order.payment, 'payment_id', None) == transID:
+        payment = order.payment
+    else:
+        # fallback: find a payment record but ensure it belongs to the same user
+        payment = Payment.objects.filter(payment_id=transID, user=request.user).order_by('-id').first()
+
+    if not payment or payment.user_id != request.user.id:
+        # ensure the payment record belongs to the same user
+        messages.error(request, 'Payment not found or you do not have permission to view it')
+        return redirect('shop:shop')
+
+    ordered_products = OrderProduct.objects.filter(order_id=order.id)
+
+    subtotall = 0
+    for i in ordered_products:
+        subtotall += i.product_price * i.quantity
+    subtotal = round(subtotall, 2)
+
+    context = {
+        'order': order,
+        'ordered_products': ordered_products,
+        'order_number': order.order_number,
+        'transID': payment.payment_id,
+        'payment': payment,
+        'subtotal': subtotal,
+    }
+    return render(request, 'shop/orders/order_completed/order_completed.html', context)
     
 
 @csrf_exempt
