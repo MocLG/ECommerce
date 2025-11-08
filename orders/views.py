@@ -119,17 +119,17 @@ def checkout(request,total=0, total_price=0, quantity=0, cart_items=None):
     except ObjectDoesNotExist:
         pass # just ignore
 
+    tax = round(((17 * total_price)/100), 2)  # BiH VAT rate of 17%
+    grand_total = total_price + tax
+    handing = 15.00
+    total = float(grand_total) + handing
     
-        tax = round(((17 * total_price)/100), 2)
-        grand_total = total_price + tax
-        handing = 15.00
-        total = float(grand_total) + handing
-        context = {
+    context = {
         'total_price': total_price,
         'quantity': quantity,
-        'cart_items':cart_items,
+        'cart_items': cart_items,
         'handing': handing,
-        'vat' : tax,
+        'vat': tax,
         'order_total': total,
     }
     return render(request, 'shop/orders/checkout/checkout.html', context)
