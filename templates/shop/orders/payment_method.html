@@ -62,10 +62,10 @@
                                         <br>
 										<hr>
                                         <br>
-										<div>
+										<div class="text-center">
                                             <form method="post" action="{% url 'orders:payment' %}">
                                                 {% csrf_token %}
-                                                <button type="submit" class="btn btn-primary" style="background:#6772e5;border:none;padding:10px 20px;border-radius:6px;color:#fff;cursor:pointer;">Pay with Stripe</button>
+                                                <button type="submit" class="btn btn-primary" style="background:#6772e5;border:none;padding:10px 10px;border-radius:6px;color:#fff;cursor:pointer;">Pay with Stripe</button>
                                             </form>
 										</div>
                                         <br>
