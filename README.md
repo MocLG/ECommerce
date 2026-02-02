@@ -1,23 +1,230 @@
-🚀 Django Stripe Checkout IntegrationThis project implements a secure e-commerce payment solution using the Django framework for the backend and Stripe Checkout for handling secure transactions.The payment flow is secured using Stripe's Webhook system to ensure order status updates are reliable and cannot be spoofed by the client.
-🌟 Key FeaturesDjango Backend: Robust, Python-based web framework.Stripe Checkout: Redirects customers to a secure, mobile-optimized payment page hosted by Stripe.Secure Webhooks: Critical component utilizing the Stripe Webhook API to confirm payment success and prevent client-side fraud.Modular Architecture: Uses dedicated apps: orders for transactions and pages for site content.
-⚙️ Project StructureFile/DirectoryAppPurposemanage.pyRootDjango command-line utility..envRootStores all sensitive API keys and secrets. Must be in .gitignore.orders/models.pyordersDefines the Order model for database tracking.orders/views.pyordersContains the create_checkout_session (API call) and stripe_webhook_view (security endpoint).templates/orders/checkout.htmlordersThe HTML page containing the "Buy" button and the Stripe JavaScript trigger.templates/pages/home.htmlpagesThe site's main landing page.
-🛠️ Setup and Installation1. Environment SetupBash# Navigate to the project root
+# 🛒 Django E-Commerce with Stripe Checkout
 
-# Create and activate a Python virtual environment
+[![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![Django](https://img.shields.io/badge/Django-4.1+-green.svg)](https://www.djangoproject.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+A secure, full-featured e-commerce application built with Django and Stripe Checkout integration. This project implements a complete online shopping experience with product browsing, shopping cart functionality, user authentication, and secure payment processing.
+
+## ✨ Features
+
+### Core Functionality
+- **Product Catalog**: Browse and search products with detailed information
+- **Shopping Cart**: Add, remove, and manage items in your cart
+- **User Authentication**: Secure user registration, login, and profile management
+- **Order Management**: Track order history and status
+- **Stripe Checkout**: Secure payment processing with Stripe's hosted checkout page
+- **Webhook Integration**: Reliable order confirmation using Stripe webhooks
+- **Admin Dashboard**: Manage products, orders, and users through Django admin
+
+### Security Features
+- Secure webhook validation to prevent payment fraud
+- CSRF protection on all forms
+- Environment-based configuration for sensitive data
+- Secure session management
+
+## 🏗️ Project Structure
+
+```
+ECommerce/
+├── accounts/           # User authentication and profile management
+├── cart/              # Shopping cart functionality
+├── core/              # Project settings and configuration
+├── orders/            # Order processing and Stripe integration
+├── shop/              # Product catalog and shop functionality
+├── templates/         # HTML templates
+├── manage.py          # Django management script
+├── requirements.txt   # Python dependencies
+└── .env              # Environment variables (not in repo)
+```
+
+### Key Files
+
+| File/Directory | Purpose |
+|----------------|---------|
+| `manage.py` | Django command-line utility |
+| `.env` | Stores sensitive API keys and secrets (must be in `.gitignore`) |
+| `orders/models.py` | Order model for database tracking |
+| `orders/views.py` | Stripe checkout and webhook endpoints |
+| `shop/models.py` | Product and category models |
+| `cart/cart.py` | Shopping cart session management |
+
+## 🚀 Setup and Installation
+
+### Prerequisites
+
+- Python 3.8 or higher
+- pip (Python package manager)
+- Stripe account (for payment processing)
+- PostgreSQL (for production) or SQLite (for development)
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/MocLG/ECommerce.git
+cd ECommerce
+```
+
+### 2. Create Virtual Environment
+
+```bash
+# Create virtual environment
 python -m venv venv
-source venv/bin/activate 
 
-# Install required Python packages
-pip install django stripe python-dotenv
-2. Stripe API Key ConfigurationRetrieve Keys: Get your Test API Keys (Publishable and Secret) from the Stripe Dashboard.Create .env File: In the project root (ecommerce_site/), create a file named .env and populate it:Code snippet# .env
+# Activate virtual environment
+# On Linux/Mac:
+source venv/bin/activate
+# On Windows:
+venv\Scripts\activate
+```
+
+### 3. Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Environment Configuration
+
+Create a `.env` file in the project root with the following variables:
+
+```env
+# Django Settings
+SECRET_KEY=your-secret-key-here
+DEBUG=True
+
+# Stripe API Keys (get from https://dashboard.stripe.com/test/apikeys)
 STRIPE_PUBLISHABLE_KEY=pk_test_************************
 STRIPE_SECRET_KEY=sk_test_****************************
-STRIPE_WEBHOOK_SECRET=whsec_temp_cli_secret # REPLACE THIS TEMPORARILY DURING TESTING
-Run Database Setup:Bashpython manage.py makemigrations 
+STRIPE_WEBHOOK_SECRET=whsec_*************************
+
+# Database (optional for production)
+DATABASE_URL=postgresql://user:password@localhost/dbname
+```
+
+> **Note**: Never commit your `.env` file to version control!
+
+### 5. Database Setup
+
+```bash
+# Run migrations
+python manage.py makemigrations
 python manage.py migrate
-🧪 Local Webhook TestingTo securely test the payment confirmation and fulfillment flow, you must use the Stripe CLI to forward real-time webhook events to your local machine.1. Start Django ServerOpen your first terminal and ensure the server is running:Bashsource venv/bin/activate
+
+# Create superuser for admin access
+python manage.py createsuperuser
+```
+
+### 6. Run Development Server
+
+```bash
 python manage.py runserver
-2. Start Stripe CLI ListenerOpen a second terminal and log in to your Stripe account:Bashstripe login
-Then, start listening and forwarding events to your webhook URL:Bash# This command listens for the critical 'checkout.session.completed' event
+```
+
+Visit `http://127.0.0.1:8000/` in your browser.
+
+## 🧪 Testing Stripe Integration
+
+To test payments locally, you'll need to set up webhook forwarding using the Stripe CLI.
+
+### 1. Install Stripe CLI
+
+Follow the [Stripe CLI installation guide](https://stripe.com/docs/stripe-cli#install).
+
+### 2. Start Django Server
+
+In your first terminal:
+
+```bash
+source venv/bin/activate  # or venv\Scripts\activate on Windows
+python manage.py runserver
+```
+
+### 3. Start Stripe Webhook Listener
+
+In a second terminal:
+
+```bash
+# Login to Stripe
+stripe login
+
+# Forward webhooks to your local server
 stripe listen --forward-to localhost:8000/payment/stripe-webhook/
-3. Run a Test TransactionAccess your local server (e.g., http://127.0.0.1:8000/).CRITICAL: Copy the temporary whsec_... key provided by the CLI and update the STRIPE_WEBHOOK_SECRET in your .env file.Navigate to your checkout page (checkout.html).Click the Buy Button and be redirected to Stripe Checkout.Use one of Stripe's Test Card Numbers to complete the purchase.The Stripe CLI terminal should show the event arriving, confirming that your webhook handler is working and the order status is securely updated in your database
+```
+
+Copy the webhook signing secret (`whsec_...`) displayed by the CLI and update `STRIPE_WEBHOOK_SECRET` in your `.env` file.
+
+### 4. Test a Payment
+
+1. Navigate to `http://127.0.0.1:8000/`
+2. Add items to your cart
+3. Proceed to checkout
+4. Use [Stripe test card numbers](https://stripe.com/docs/testing):
+   - **Success**: `4242 4242 4242 4242`
+   - **Decline**: `4000 0000 0000 0002`
+   - Use any future expiration date and any CVC
+
+The webhook listener will show the event being received and processed.
+
+## 📦 Deployment
+
+This application is ready for deployment on platforms like:
+
+- **Heroku**: Use the included `Procfile` and `runtime.txt`
+- **Railway**: Direct deployment from GitHub
+- **DigitalOcean App Platform**: Configure from the dashboard
+- **AWS/Google Cloud**: Deploy using your preferred method
+
+### Deployment Checklist
+
+- [ ] Set `DEBUG=False` in production
+- [ ] Configure `ALLOWED_HOSTS` with your domain
+- [ ] Set up production database (PostgreSQL recommended)
+- [ ] Configure static file serving (WhiteNoise or CDN)
+- [ ] Set production webhook secret from Stripe Dashboard
+- [ ] Enable HTTPS
+- [ ] Set up environment variables on your platform
+
+## 🔧 Development
+
+### Project Apps
+
+- **accounts**: User registration, authentication, and profiles
+- **shop**: Product catalog, categories, and product details
+- **cart**: Shopping cart session management
+- **orders**: Order creation and Stripe payment processing
+
+### Admin Access
+
+Access the Django admin at `http://127.0.0.1:8000/admin/` to manage:
+- Products and categories
+- Orders and order items
+- Users and permissions
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- [Django](https://www.djangoproject.com/) - The web framework used
+- [Stripe](https://stripe.com/) - Payment processing
+- [Bootstrap](https://getbootstrap.com/) - Frontend framework
+
+## 📞 Support
+
+If you have any questions or run into issues, please open an issue on GitHub.
+
+---
+
+Made with ❤️ by MocLG
